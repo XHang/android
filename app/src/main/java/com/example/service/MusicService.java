@@ -51,12 +51,12 @@ public class MusicService {
     public MusicService() {
         musicPaths = new ArrayList<>();
         //假设音乐文件夹就在根目录下面的music文件夹
+        File[] arr = SDCardRood.listFiles();
         Collection<File> musicFiles = FileUtils.listFiles(SDCardRood, new IOFileFilter() {
             @Override
             public boolean accept(File file) {
                 return   file.getName().endsWith(".mp3");
             }
-
             @Override
             public boolean accept(File dir, String name) {
                 return true;
@@ -98,6 +98,7 @@ public class MusicService {
         }
         currentMusic = index;
         currentState = new play();
+
         currentState.Do(this,playBtn);
 
     }

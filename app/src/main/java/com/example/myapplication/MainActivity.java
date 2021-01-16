@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.dto.MusicInfo;
 import com.example.service.MusicService;
+import com.example.service.logService;
 import com.example.state.stop;
 import com.example.thread.seekBarAutoFlow;
 
