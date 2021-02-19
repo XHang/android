@@ -11,7 +11,7 @@ public class pause implements state {
 
     @Override
     public void Do(MusicService musicService, Button playBtn) {
-        MediaPlayer mediaPlayer = musicService.mediaPlayer;
+        MediaPlayer mediaPlayer = musicService.getMediaPlayer();
         if (mediaPlayer == null || !mediaPlayer.isPlaying()) {
             return;
         }

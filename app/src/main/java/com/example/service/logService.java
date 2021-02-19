@@ -71,14 +71,25 @@ public class logService {
 
 
     public void Info(String msg, Object... args) {
-        msg = String.format(msg, args) + "\r\n";
+        msg = String.format("info:"+msg, args) + "\r\n";
+        log(msg);
+
+    }
+
+    private void log(String msg) {
+        System.out.println(msg);
         byte[] bytes = new byte[0];
         bytes = msg.getBytes(StandardCharsets.UTF_8);
         if (this.buffer.position() + bytes.length >= this.buffer.limit()) {
             this.resetBuffer();
         }
         this.buffer.put(bytes);
+    }
 
+    public void Error(Throwable e,String msg, Object... args) {
+        msg = String.format("error:"+msg+",cause:"+e !=null?e.getMessage():"", args) + "\r\n";
+        System.out.println(msg);
+        log(msg);
     }
 
 

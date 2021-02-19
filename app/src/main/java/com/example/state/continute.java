@@ -9,7 +9,7 @@ import com.example.service.MusicService;
 public class continute implements state {
     @Override
     public void Do(MusicService musicService ,Button playBtn) {
-        MediaPlayer mediaPlayer = musicService.mediaPlayer;
+        MediaPlayer mediaPlayer = musicService.getMediaPlayer();
         if (mediaPlayer == null) {
             return;
         }

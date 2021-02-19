@@ -11,19 +11,16 @@ public class play implements state {
 
     @Override
     public void Do(MusicService musicService, Button playBtn) {
-        MediaPlayer mediaPlayer = musicService.mediaPlayer;
+        MediaPlayer mediaPlayer = musicService.getMediaPlayer();
         //无法播放超出游标的音乐
         try {
-            if (musicService.currentMusic >= musicService.getMusicPaths().size()) {
-                return;
-            }
             mediaPlayer.reset(); //重置多媒体
-            String currentPath = musicService.getMusicPaths().get(musicService.currentMusic);
+            String currentPath = musicService.getCurrentMusic().getMusicInfo().getMusicPath();
             mediaPlayer.setDataSource(currentPath);
             mediaPlayer.setAudioAttributes(new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
             mediaPlayer.prepare();
+            musicService.getCurrentMusic().setMaxSec(mediaPlayer.getDuration()/1000); //getDuration得在prepare之后再调用
             mediaPlayer.start();
-            musicService.setCurrentMusicName(currentPath);
             //注册监听器：当音乐播放完毕要怎么办
             mediaPlayer.setOnCompletionListener((listener) -> {
                 musicService.next(playBtn);
