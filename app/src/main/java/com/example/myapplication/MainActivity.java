@@ -3,6 +3,11 @@ package com.example.myapplication;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.DragEvent;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -10,6 +15,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GestureDetectorCompat;
 
 import com.example.dto.CurrentMusic;
 import com.example.dto.MusicInfo;
@@ -25,11 +31,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private boolean isLoop;
     private ListView list;
-    Button play ;
+    private Button play ;
 
-    public SeekBar getSeekBar() {
-        return seekBar;
-    }
+    //手势相关
+    private GestureDetectorCompat  musicGesture;
+
+
 
 
     @Override
@@ -44,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         //初始化列表数据
         list = this.findViewById(R.id.musicList);
         play = findViewById(R.id.play);
+        musicGesture = new GestureDetectorCompat(this, new MusicGesture());
         showMusicList();
         registBtnNext();
         registBtnLast();
@@ -52,8 +60,11 @@ public class MainActivity extends AppCompatActivity {
         registDragSeekBar();
         startSeekBarFlow();
         registListClick();
+        registSlip();
     }
-
+    public SeekBar getSeekBar() {
+        return seekBar;
+    }
     private void registListClick() {
         list.setOnItemClickListener((parent, view, position, id) -> {
             MusicInfo m = (MusicInfo) parent.getItemAtPosition(position);
@@ -150,5 +161,23 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
+    private void registSlip(){
+        ViewGroup view =  findViewById(android.R.id.content);
+        //整个主视图触摸事件发生时，就会调用此方法
+        view.setOnTouchListener(this::onTouch);
+    }
 
+    private  boolean onTouch(View v, MotionEvent e) {
+        this.musicGesture.onTouchEvent(e);
+        return true;
+    }
+
+    private class MusicGesture extends GestureDetector.SimpleOnGestureListener{
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            //仅当滑动时才会调用此方法
+            System.out.println("划动了耶");
+            return super.onFling(e1, e2, velocityX, velocityY);
+        }
+    }
 }
