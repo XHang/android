@@ -95,7 +95,10 @@ var aString:String?= a as? String // aString预期会是字符串
 ## Nothing 类型
 在Kotlin里面，所有表达式都有类型，`throw IllegalArgumentException()`的表达式类型就是Nothing。
 Nothing是所有类型的子集，它可以用在泛型或者返回值上。
-当它被用在函数上时，通常表示这个函数永远无法正常完成，可能是永远抛出异常或者陷入无限死亡的梦魇。
+> 用在泛型的话，可以理解任意类型都可以接受Nothing（Any则是反过来）
+> 就好像哺乳动物类下面是猫科动物。哺乳动物可以接受猫科动物
+
+当它被出现在函数上时，通常表示这个函数永远无法正常完成，可能是永远抛出异常或者陷入无限死亡的梦魇。
 Example
 ```
 func fail(message:String):Nothing{
@@ -108,4 +111,119 @@ func main(){
 	val s:String=persion.name?:fail("name required")
 }
 
+```
+
+##  高阶函数
+
+高阶函数是一类函数，这类函数接受函数为参数，或者把函数当返回值返回。
+
+Koltin支持高阶函数，也就是函数式编程。
+>You can perform any operations on functions that are possible for other non-function values.
+意思就是说：你可以对函数执行任何原本对非函数可用的任何操作
+
+
+### 如何调用高阶函数
+#### lambdas
+lambdas就是一串代码块，用`{}`包裹起来
+如果有一个高阶函数的入参是一个函数，那么可以用lambdas来调用它
+比如说有一个高阶函数长下面这个样子
+```
+fun <T, R> Collection<T>.fold(
+    initial: R,
+    combine: (acc: R, nextElement: T) -> R
+): R {
+    var accumulator: R = initial
+    for (element: T in this) {
+        accumulator = combine(accumulator, element)
+    }
+    return accumulator
+}
+```
+> 第二个参数就是一个函数，接受两个参数，acc是当前累加结果，element就是下一个元素
+
+用lambdas调用会是下面这个样子
+```
+val items = listOf(1, 2, 3, 4, 5)  
+items.fold(2,{  
+    acc:Int,i:Int->  // 当lambdas接受参数的话，它们首先得写上去。然后是->
+    val result:Int = acc+i  
+    result  //lambdas最后一个表达式被认为是它的返回值
+})
+
+```
+也可不写lambdas函数参数的类型，编译器可以推断
+```
+items.fold(2,{a,b->a+b})
+```
+#### 直接引用成员方法
+```
+val product = items.fold(1,Int::times) //  times是一个成员函数，参数其实2个，一个是接收者
+```
+
+### 函数类型
+函数本身也可以作为类型。这样我们就可以写一个变量，类型是函数，值是用lambda写的函数体
+比如说
+```
+val f:(Int)->Int = {a->a+1}
+val f:(a:Int)->Int = {a->a+1} //在函数类型上给参数指定参数名，没啥意义主要是给文档用的
+```
+含义：定义了一个变量，名字叫f，类型是函数，这个函数接受一个数字类型参数，返回数字。
+这个函数只是简单地把参数+1然后返回罢了。
+
+上面写的函数类型`(a:Int)->Int` 还可以携带接收者
+```
+val fc : StringBuilder.(s: StringBuilder)-> StringBuilder = {s->append(s)}
+```
+这样的话就是为StringBuilder对象增加了一个方法，该方法接受StringBuilder参数，返回值是StringBuilder
+到时调用就可以用构建StringBuilder对象.fc 来调用它了
+> 别看函数体，我为了简单随便写写的。
+
+ **嵌套函数类型**
+ 函数类型里面的参数或者返回值类型也可以是函数（什么嵌套地狱）,用括号包裹起来
+ 虽然看到会头大，但就是有这种用法
+ ```
+ val f:(Int)->((String)->String) = {  
+    n->{  
+        s->s.repeat(n)}  
+}
+ ```
+
+## 表达式
+在Koltin里，万物都可以作为表达式，比如说，`if`语句
+```
+val s = "is it true"  
+val b = if (s == "it's true") true else false
+```
+when也是行的
+```
+val s = "Hello"  
+val result = when (s) {  
+    "I" -> "You"  
+    "Hello" -> "Greeting"  
+    else -> "Shit"  
+}  
+println(result)
+```
+
+# 范围
+想简单的创建一个有序数组（范围），可以用以下方式
+```
+val r = 1..4  //r里面包含1，2，3，4
+val r = 1..<4 // r 里面只包含1，2，3
+val r = 4 downTo 1 // r里面是4，3，2，1 
+//字母也是行的
+```
+
+## while-do循环
+这种循环可以先让你执行一段代码do后，再去执行条件表达式
+例子
+```
+var cakeBaked = 0  
+do{  
+  println("bake a cake")  
+  cakeBaked++  
+}while (cakeBaked<cakeEaten)
+// Bake a cake
+// Bake a cake
+// Bake a cake
 ```
