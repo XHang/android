@@ -10,6 +10,22 @@
 语法
 `func name(a:Int,b:Int)=a+b`
 函数是可以写成一个表达式的，你甚至不需要写返回值，编译器自己推断
+
+## 扩展函数
+想为第三方库提供的类写一个自己的函数，但是你又不能修改到第三方库的源代码。
+是时候看看Extended functions了。
+比如说看看下面这个
+```
+fun String.bold():String = "<b>$this</b>"  
+fun main(){  
+    println("mine is bigger!".bold())  
+}
+```
+上面的代码给String添加了扩展函数bold，调用它时就跟调用其他方法没什么两样。
+在某些情况下还是挺有用的，比如说第三方类库只提供一个大而全的函数，但实际你经常使用的也就那几个参数，那么你就可以写一个拓展函数来方便调用了。
+
+
+
 ## 参数默认值
 语法
 ```
@@ -20,15 +36,81 @@ func name(a:Int=2,b:Int)=a+b
 name(b=2)
 ```
 这里由于默认值参数排在一般参数的前面，在调用时给第二个参数传值时，需要指定是哪个参数的值
+## 范围函数
+范围函数可以让你创建一个范围，变量只能在这个范围内使用，这样就避免变量的作用域太大从而造成不必要的麻烦，同时共享同一个命名空间（scope）
+常用的范围函数有下面几种
+### let
+参考非空验证那一章
+### apply
+可以在新建对象后立即调用apply完成对象的一些初始化操作，比如
+```
+class Client() {  
+    var token: String? = null  
+    fun connect() = println("connected!")  
+    fun authenticate() = println("authenticated!")  
+    fun getData(): String {  
+        println("getting data!")  
+        return "Mock data"  
+    }  
+}  
+  
+fun main() {  
+    val client = Client().apply {  
+        token = "asf"  
+        connect()  
+        authenticate()  
+    }  
+    println(client.getData())  
+}
+```
+这样代码更好读，组织性更好
+### run
+和apply类似，你也可以在run代码块里面为对象进行一些初始化操作，但是run允许你立刻用对象进行一些计算然后返回计算的结果。
+例如
+```
+fun main() {  
+    val result = Client().run {  
+        token = "asf"  
+        connect()  
+        authenticate()  
+        getData()  
+    }  
+  }
+```
+
+比如说你创建client只是为了最后调用getData拿到结果
+### also
+also函数方便在一个函数执行后，再执行一次额外的操作。
+经常用于记录某次函数执行后的日志，或者链式操作，debug等等。
+```
+fun main() {
+    val medals: List<String> = listOf("Gold", "Silver", "Bronze")
+    val reversedLongUppercaseMedals: List<String> =
+        medals
+            .map { it.uppercase() }
+            .also { println(it) }
+            // [GOLD, SILVER, BRONZE]
+            .filter { it.length > 4 }
+            .also { println(it) }
+            // [SILVER, BRONZE]
+            .reversed()
+    println(reversedLongUppercaseMedals)
+    // [BRONZE, SILVER]
+}
+```
+
 # 模板
 Kotlin支持在字符串里面直接运用表达式，到时输出的字符串就会携带这个表达式的结构输出
 想要在字符串里面表达这是一个表达式，则在表达式前面用`$` 标记
 Example
 ```
 val month = "(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)"  
-  fun getPattern(): String = """\d{2}\s$month\s\d{4}"""
+fun getPattern(): String = """\d{2}\s$month\s\d{4}"""
 ```
-
+如果是访问对象的成员变量的话，可以这么写
+```
+println("the name of a contact is ${a.name}")
+```
 
 # 特色
 ## 非空验证(?)
@@ -80,6 +162,12 @@ Example
 ```
 val nullableList:List<Int?> = listOf(1,2,null)
 val intList List<int> = nullableList.filterNotNull() // 预期intList里面只有1，2
+```
+###  Elvisc操作符
+使用`?`进行非空校验，默认如果真的是空，会返回Null,如果想指定其他不是Null的默认值，可以用Elvisc操作符`?:`
+```
+val str:String?=null  
+println(str?.length?:0)
 ```
 
 ## 安全类型转化
@@ -155,6 +243,30 @@ items.fold(2,{
 ```
 items.fold(2,{a,b->a+b})
 ```
+如果是没有参数的lambdas表达式，代码还可以更简洁
+
+```
+{ println("Log message") }
+```
+
+lambdas本身就是一个函数，所以你可以写它之后立即调用它
+```
+println({x:String->x.uppercase()}("hello"))
+//HELLO
+```
+##### trailing lambdas
+如果高阶函数只有一个lambda函数参数，那么在调用这个高阶函数，你甚至可以把双括号去掉，只保留lambda特有的大括号
+```
+val numbers = listOf(1, -2, 3, -4, 5, -6)
+val positives = numbers.filter{x -> x >0}
+```
+如果高阶函数最后一个参数是函数，你在调用高阶函数时可以把lambda放在参数外面
+```
+println(listOf(1,2,3).fold(0){ x, item->x*item}) // fold 是把list的每一个元素操作叠加
+```
+Either way,它们都是跟随在函数后面，所以才叫trailing lambdas(尾随lambdas)
+
+
 #### 直接引用成员方法
 ```
 val product = items.fold(1,Int::times) //  times是一个成员函数，参数其实2个，一个是接收者
@@ -178,6 +290,18 @@ val fc : StringBuilder.(s: StringBuilder)-> StringBuilder = {s->append(s)}
 到时调用就可以用构建StringBuilder对象.fc 来调用它了
 > 别看函数体，我为了简单随便写写的。
 
+如果定义的函数类型没有参数，可以更简洁
+```
+val a ()->Unit
+```
+可以发现，在这个语法下面，参数和返回值类型是必须指定的，要么是在类型那边指定，要么是在lambdas里面指定，否则编译器会let you down
+
+如果觉得每次变量声明都得写一大串函数声明，也可以先给函数类型一个别名先定义起来
+```
+typealias ClickHandler = (Button, ClickEvent) -> Unit
+```
+
+ 
  **嵌套函数类型**
  函数类型里面的参数或者返回值类型也可以是函数（什么嵌套地狱）,用括号包裹起来
  虽然看到会头大，但就是有这种用法
@@ -227,3 +351,45 @@ do{
 // Bake a cake
 // Bake a cake
 ```
+
+# 类
+Kotlin支持对象编程，这意味着你可以构建类，创建对象等等。
+定义一个类 with properties可以是
+```
+class Contact(val id:Int,var email:String) //在括号里定义成员变量
+```
+或者
+```
+class Contact(val id: Int,  email: String) {  
+    val category: String = ""  
+}
+```
+注意：如果在括号里定义成员变量但是不写var或者val，那么这个成员变量不可访问的
+你还可以指定成员变量的默认值
+```
+class Contact(val id:Int,name: String = "同事"){  
+    var category:String = "技术部"  
+}
+```
+## 创建对象
+不像JAVA,你必须用New 关键字来创建时间，在Kotlin里，你可以简单的用类名来创建实例
+```
+class Contact(val id:Int,name: String = "同事"){  
+    var category:String = "技术部"  
+}
+val a:Contact = Contact(1,"李四")  //不要把Contact误认为是一般函数了，它是构造函数
+```
+像上面的代码，在类名后紧跟着写上成员变量，用括号括起来，这样就会生成一个默认构造函数，参数就是那些指定好的成员变量
+## 数据类
+数据类也是一中类，不同的是编译器会为数据类生成默认的成员函数，比如说
+- toString() ： 在`println`会自动使用，不需要特别指定
+- equals()：可以使用`==`，不需要真的写equals()
+- copy
+这样你就不用每次写这些成员函数了。
+要声明一个数据类，在一般类的前面添加关键字data
+
+```
+data class User(val id:Int,val name: String)
+```
+注意的是，自动生成的成员函数用到的成员变量，只会是默认构造器里面有的成员变量。
+如果成员变量是定义在类body里面的，则不会出现在自动生成的成员函数
