@@ -74,4 +74,5 @@ if errorlevel 1 (
 echo.
 echo Done: "%MSG%" committed and pushed on "%BRANCH%".
 endlocal
+pause
 exit /b 0
