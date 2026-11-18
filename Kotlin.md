@@ -98,6 +98,29 @@ fun main() {
     // [BRONZE, SILVER]
 }
 ```
+### with
+当你想为某个对象执行一系列的操作，你总是得写`对象.成员方法`对吧。
+用with范围函数的话，你可以把`对象`当作参数传进去，在这个范围函数里面执行的对象的任何方法，都不在需要在前面写对象了
+```
+class Canvas {
+    fun rect(x: Int, y: Int, w: Int, h: Int): Unit = println("$x, $y, $w, $h")
+    fun circ(x: Int, y: Int, rad: Int): Unit = println("$x, $y, $rad")
+    fun text(x: Int, y: Int, str: String): Unit = println("$x, $y, $str")
+}
+val mainMonitorSecondaryBufferBackedCanvas = Canvas()
+with(mainMonitorSecondaryBufferBackedCanvas) {
+    text(10, 10, "Foo")
+    rect(20, 30, 100, 50)
+    circ(40, 60, 25)
+    text(15, 45, "Hello")
+    rect(70, 80, 150, 100)
+    circ(90, 110, 40)
+    text(35, 55, "World")
+    rect(120, 140, 200, 75)
+    circ(160, 180, 55)
+    text(50, 70, "Kotlin")
+}
+```
 
 # 模板
 Kotlin支持在字符串里面直接运用表达式，到时输出的字符串就会携带这个表达式的结构输出
@@ -265,6 +288,33 @@ val positives = numbers.filter{x -> x >0}
 println(listOf(1,2,3).fold(0){ x, item->x*item}) // fold 是把list的每一个元素操作叠加
 ```
 Either way,它们都是跟随在函数后面，所以才叫trailing lambdas(尾随lambdas)
+##### 带接收者的lambdas
+lambdas也可以带接收者，这种情况下，在lambdas里面可以自由的访问接收者的成员函数，变量等。而你不用每次都指定对象来访问它们
+最简单带接收者的lambdas是
+```
+MutableList<Int>.() -> Unit
+```
+以上，MutableList就是接收者，这个带接收者的lambdas没有参数，也没有返回值
+实际使用例子
+```
+class Canvas {  
+    fun drawCircle() = println("🟠 Drawing a circle")  
+    fun drawSquare() = println("🟥 Drawing a square")  
+}  
+  
+fun render(block: Canvas.() -> Unit): Canvas {   //带Canvas接收者的lambdas
+    val canvas = Canvas()  
+    canvas.block()  // 实际使用
+    return canvas  
+}  
+  
+fun main() {  
+    render {    
+        drawCircle()  // 等同于 this.drawCircle() ，this可忽略
+        drawSquare()  
+    }  
+}
+```
 
 
 #### 直接引用成员方法
@@ -282,7 +332,7 @@ val f:(a:Int)->Int = {a->a+1} //在函数类型上给参数指定参数名，没
 含义：定义了一个变量，名字叫f，类型是函数，这个函数接受一个数字类型参数，返回数字。
 这个函数只是简单地把参数+1然后返回罢了。
 
-上面写的函数类型`(a:Int)->Int` 还可以携带接收者
+上面写的函数类型`(a:Int)->Int` 还可以携带**接收者**
 ```
 val fc : StringBuilder.(s: StringBuilder)-> StringBuilder = {s->append(s)}
 ```
@@ -328,6 +378,55 @@ val result = when (s) {
 }  
 println(result)
 ```
+## 单例
+在kotlin里面，可以以一个比较方便的方式创建单例对象
+举例
+```
+Object DoAuth{
+ fun takeParams(username: String, password: String) {
+        println("input Auth parameters = $username:$password")
+    }
+}
+fun main(){
+	DoAuth.takeParams("coding_ninja", "N1njaC0ding!")
+}
+```
+以上代码就是创建了一个单例对象，名字叫DoAuth，后面的对象体跟一般的类声明没有区别。
+而且只有当takeParams访问时，DoAuth才会创立，也就是懒加载。
+单例对象也可以继承，例如
+```
+interface Auth { fun takeParams(username: String, password: String) }
+
+Object DoAuth: Auth{
+	 override fun takeParams(username: String, password: String) {
+        println("input Auth parameters = $username:$password")
+    }
+}
+```
+也可以创建一个数据类的单例对象，这种对象同样可以使用自动生成的方法如`toString()` 和`equals()`,除了copy不能用，毕竟是单例。
+```
+data object AppConfig {}
+```
+### companion对象
+类里面可以拥有一个companion对象，这个对象只会在类的第一次被引用时创建，并且所有类的实例都可以访问到这个对象（共享），直接用类来引用也是可以的
+其实说白了就是相当于java的类成员和类方法(区分于成员变量和成员方法)
+```
+class BigBen {
+    companion object Bonger {
+        fun getBongs(nTimes: Int) {
+            repeat(nTimes) { print("BONG ") }
+            }
+        }
+    }
+ fun main() {
+    // Companion object is created when the class is referenced for the
+    // first time.
+    BigBen.getBongs(12)
+    // BONG BONG BONG BONG BONG BONG BONG BONG BONG BONG BONG BONG 
+}   
+```
+这个对象不需要名称，当然你也可以命名一个。
+
 
 # 范围
 想简单的创建一个有序数组（范围），可以用以下方式
@@ -393,3 +492,174 @@ data class User(val id:Int,val name: String)
 ```
 注意的是，自动生成的成员函数用到的成员变量，只会是默认构造器里面有的成员变量。
 如果成员变量是定义在类body里面的，则不会出现在自动生成的成员函数
+## 继承
+毕竟是从JAVA衍生过来的，Kotlin也有继承，并且只允许单继承。最上层的类就是`Any`
+## 抽象类
+抽象类在设计之初就是被继承的，在抽象类里面，你可以拥有抽象的方法和成员变量，也可以拥有实现好的成员变量和方法。一旦继承，你就全部拥有，那么怎么定义抽象类呢？
+Example
+```
+abstract class Product(val name: String, var price: Double) {
+    abstract val category: String  //抽象成员变量
+
+    // 抽象类里的具体实现方法
+    fun productInfo(): String {
+        return "Product: $name, Category: $category, Price: $price"
+    }
+}
+```
+要继承的话
+```
+//继承类可拥有自己的构造函数，这里加了属性warranty，默认构造函数会调父类的构造函数(name, price)
+class Electronic(name: String, price: Double, val warranty: Int) : Product(name, price) {
+    override val category = "Electronic" //实现了抽象类的category成员变量
+}
+```
+
+## 接口
+和Java特别像，一个类可以实现多个接口，不同的只是语法。
+先看看接口的语法
+```
+interface PaymentMethod {
+    // Functions are inheritable by default
+    fun initiatePayment(amount: Double): String
+}
+```
+继承的话会有点不同
+在类声明后面加上`:`+接口名就可以对这个接口继承，多个用逗号隔开
+```
+class CreditCardPayment(val cardNumber: String, val cardHolderName: String, val expiryDate: String) : PaymentMethod {
+    override fun initiatePayment(amount: Double): String {
+        // Simulate processing payment with credit card
+        return "Payment of $$amount initiated using Credit Card ending in ${cardNumber.takeLast(4)}."
+    }
+}
+```
+## delegation(代理)
+如果有一个接口里面规定了许多的抽象方法，想要继承它就必须把所有方法都实现。
+但实际上，这个接口有一个字类实现的抽象方法都是通用的，如果这个子类的实现方法可以被其他子类使用，那么它们就不需要实现那么多抽象方法了。
+兄弟，有的有的，这个方法叫做delegation
+示例
+假设我们有这么一个接口
+```
+interface DrawingTool {
+    val color: String
+    fun draw(shape: String)
+    fun erase(area: String)
+    fun getToolInfo(): String
+}
+```
+
+然后有一个实现
+```
+class PenTool : DrawingTool {
+    override val color: String = "black"
+
+    override fun draw(shape: String) {
+        println("Drawing $shape using a pen in $color")
+    }
+
+    override fun erase(area: String) {
+        println("Erasing $area with pen tool")
+    }
+
+    override fun getToolInfo(): String {
+        return "PenTool(color=$color)"
+    }
+}
+```
+后面如果你想扩展更多的DrawingTool就得重复的实现方法，但是实际上你觉得PenTool里面的实现就够用了，唯一需要定义的就是DrawingTool的颜色。
+所以你可以使用delegation
+```
+class CanvasSession(val tool: DrawingTool) : DrawingTool by tool{
+	 override val color: String = "blue"
+}
+```
+这里的`tool`就是PenTool的实例名字,刚好你也把这个实例当作构造函数传进来了不是吗
+当然，你还可以继续实现draw、erase、getToolInfo这些方法，只是你不再需要全部实现了
+## open类
+由于某种原因，你不能写接口或者抽象类，但又想写一个类让别人继承（kotlin一般类不能被继承），这个时候，你可以用open关键字。
+```
+open class Vehicle(val make: String, val model: String)
+```
+这样就表示Vehicle是可以被其他类继承的，比如说
+```
+class car(make:String,model:String,val numberOfDoors:Int):Vehicle(make,model)
+```
+open类里面的方法也可以标识为open来表示它可以被override。
+```
+open class Vehicle(val make: String, val model: String) {
+    open fun displayInfo() {
+        println("Vehicle Info: Make - $make, Model - $model")
+    }
+}
+```
+子类可以写override关键字来把它覆盖掉
+```
+class Car(make: String, model: String, val numberOfDoors: Int) : Vehicle(make, model) {
+    override fun displayInfo() {
+        println("Car Info: Make - $make, Model - $model, Number of Doors - $numberOfDoors")
+    }
+}
+```
+同理，成员变量也可用open来表示可覆盖，但是一般不推荐这么做，你还不如把它都放在构造函数里直接访问。
+
+## sealed class
+sealed class 是一类特殊的抽象类，这个类只能被同个包内的子类继承，外包不能继承该类。
+举例
+```
+sealed class Mammal(val name:String){}  
+class Cat(val catName:String): Mammal(catName)  
+class Human(val humanName:String,val job:String): Mammal(humanName)  
+fun greetMammal(mammal: Mammal):String{  
+    when (mammal){  
+        is Human-> return "Hello ${mammal.name}; You're working as a ${mammal.job}"  
+        is Cat -> return "Hello ${mammal.name}"  
+    }  
+}  
+fun main() {  
+    println(greetMammal(Cat("Snowy")))  
+    // Hello Snowy  
+}
+```
+因为sealed class 的所有子类都在同一个包里，编译器很容易就指定它有哪些字类，所以写when条件判断是很顺手的事。
+## 枚举
+没啥好说的,语法如下
+```
+enum class Color(val rgb: Int) {
+    RED(0xFF0000),
+    GREEN(0x00FF00),
+    BLUE(0x0000FF),
+    YELLOW(0xFFFF00);
+
+    fun containsRed() = (this.rgb and 0xFF0000 != 0)
+}
+```
+
+这里的枚举可以拥有属性和方法，每一个枚举量其实就是Color的实例
+
+## 内联对象
+如果你只想创建一个小对象，并只使用一段很短的时间，那么你可以使用内联对象让JVM编译器对这个对象做点优化来提升性能。
+```
+@JvmInline
+value class Email(val address: String)
+```
+内联类必不可少的是`@JvmInline`注解和value关键字。
+然而需要的注意的是
+1. 内联类只能存（value）
+2. 内联类的构造函数必须有一个参数
+示例
+```
+// The address property is initialized in the class header.
+@JvmInline
+value class Email(val address: String)
+
+fun sendEmail(email: Email) {
+    println("Sending email to ${email.address}")
+}
+
+fun main() {
+    val myEmail = Email("example@example.com")
+    sendEmail(myEmail)
+    // Sending email to example@example.com
+}
+```
