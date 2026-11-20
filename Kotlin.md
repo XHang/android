@@ -122,6 +122,11 @@ with(mainMonitorSecondaryBufferBackedCanvas) {
 }
 ```
 
+## 常用函数
+### takeIf
+这个函数是成员函数，接受一个lambda，如果表达式的结果是true，则返回这个成员变量，否则返回Null
+
+
 # 模板
 Kotlin支持在字符串里面直接运用表达式，到时输出的字符串就会携带这个表达式的结构输出
 想要在字符串里面表达这是一个表达式，则在表达式前面用`$` 标记
@@ -186,12 +191,32 @@ Example
 val nullableList:List<Int?> = listOf(1,2,null)
 val intList List<int> = nullableList.filterNotNull() // 预期intList里面只有1，2
 ```
-###  Elvisc操作符
+###  Elvisc操作符-指定默认值
 使用`?`进行非空校验，默认如果真的是空，会返回Null,如果想指定其他不是Null的默认值，可以用Elvisc操作符`?:`
 ```
 val str:String?=null  
 println(str?.length?:0)
 ```
+###  Elvisc操作符-空情况执行返回
+如果遇到空的情况，除了上面指定默认值，还可以写return语句来提前返回
+```
+data class User(
+    val id: Int,
+    val name: String,
+    // List of friend user IDs
+    val friends: List<Int>
+)
+
+// Function to get the number of friends for a user
+fun getNumberOfFriends(users: Map<Int, User>, userId: Int): Int {
+    // Retrieves the user or return -1 if not found
+    val user = users[userId] ?: return -1  // 如果用户id查不到，直接返回-1终止函数
+    // Returns the number of friends
+    return user.friends.size
+}
+```
+
+
 
 ## 安全类型转化
 在Kotlin里，类型转换的关键字是`as`，但是如果目标不是指定类型，它会抛除一个异常。
@@ -428,7 +453,7 @@ class BigBen {
 这个对象不需要名称，当然你也可以命名一个。
 
 
-# 范围
+# 集合(数组)
 想简单的创建一个有序数组（范围），可以用以下方式
 ```
 val r = 1..4  //r里面包含1，2，3，4
@@ -436,7 +461,14 @@ val r = 1..<4 // r 里面只包含1，2，3
 val r = 4 downTo 1 // r里面是4，3，2，1 
 //字母也是行的
 ```
+## 常用的集合方法
+1. firstNotNullOfOrNull，提供一个lambda表达式，把列表转化为另一个格式的列表
+> 比如说从用户数组提取出用户id数组
 
+2. singleOrNull 提供一个lambdas表达式，里面写匹配条件返回ture或者false，返回第一个匹配的
+3. listOfNotNull 直接在里面写数组元素，就算是Null也无所谓，最后创建一个非空的列表
+4. filterNotNull 从一个列表过滤掉Null元素
+5. reduceOrNull 按顺序循环列表，提供当前值和下一值。最后返回叠加后的结果
 ## while-do循环
 这种循环可以先让你执行一段代码do后，再去执行条件表达式
 例子
@@ -663,3 +695,207 @@ fun main() {
     // Sending email to example@example.com
 }
 ```
+
+## 成员变量
+Kotlin的成员变量和Java很类似，唯一的区别是它为了不再写模板化的get和set方法，都在编译器内自动帮你生成了。
+你在Kotlin直接对成员变量读取和赋值，实际编译之后都变成了get和set方法。
+那么问题来了，既然直接对成员变量读取和赋值都是调用了get和set方法，那么实际成员变量存储在哪里？
+答案是
+### Backing fields.
+不过Backing fields 存不存在取决于下面任意一个条件
+1. 使用的是默认的get和set方法，你不会去覆盖默认的这两个方法
+2. 你使用关键字`field`来访问成员变量
+不过既然任何访问成员变量最终都会变成调用get和set方法，那么如果你真想修改get或者set方法呢？
+这样子搞？
+```
+class Person {
+    var name: String = ""
+        set(value) {
+            // This causes a runtime error
+            name = value.replaceFirstChar { firstChar -> firstChar.uppercase() }
+        }
+}
+```
+No No No, 在上面的代码里`name = ` 等同于再次调set这个方法，你就等着无限循环吧
+所以为了真正赋值到成员变量里，也就是Backing fields.你得使用Field关键字
+```
+class Person {
+    var name: String = ""
+        set(value) {
+            field = value.replaceFirstChar { firstChar -> firstChar.uppercase() }
+        }
+}
+```
+
+### extended fields
+既然函数有扩展函数，那成员变量也有扩展的咯
+示例
+```
+data class Person(val firstName: String, val lastName: String)
+val Person.fullName: String
+    get() = "$firstName $lastName"
+```
+上面的代码就不需要修改Person类的源代码，而凭空增加了一个新的成员变量`fullName`
+但是和一般的成员变量不一样的是
+1. 编译器不会对`extended fields`生成set和get函数，你得自己写个（写完之后直接对它进行任何操作编译器会自动提供为你写的set和get函数）
+2. 实际上extended fields没有backfields，所以实际它存不了任何值, 最多就是计算一些结果。
+实际使用示例
+```
+data class Person(val firstName: String, val lastName: String)
+
+// Extension property to get the full name
+val Person.fullName: String
+    get() = "$firstName $lastName"
+
+fun main() {
+    val person = Person(firstName = "John", lastName = "Doe")
+
+    // Use the extension property
+    println(person.fullName)
+    // John Doe
+}
+```
+所以总的来说，可以把extended fields当作是成员函数
+### delegated fields
+成员变量也可以被委托和代理，一般是你觉得简单的backing fieids还不够强大，因为你的成员变量是通过计算得来的结果，简单的赋值和取值已经满足不了你了，
+那么你可以把这个变量委托给一个类，让这个类来帮你计算出结果再赋值给这个成员变量。
+那这个代理类，就必须有两个或者至少一个函数
+```
+operator fun getValue(thisRef: Any?, property: KProperty<*>): String {}
+
+operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {}
+```
+1. thisRef: Any? 这个参数代表是哪个被代理成员变量的对象（到时可以把Any改为更具体的类型）
+2. property 这个参数表示是哪个成本变量被代理了，你可以知道它的类型和变量名
+3. 如果被代理的成员变量是`val`也就是不会再被赋值，那么setValue函数可以不写
+4. operator标记它们是操作函数，这样就可以覆写get和set方法了
+实际例子
+```
+class CachedStringDelegate {
+    var cachedValue: String? = null
+
+    operator fun getValue(thisRef: User, property: Any?): String {
+        if (cachedValue == null) {
+            cachedValue = "${thisRef.firstName} ${thisRef.lastName}"
+            println("Computed and cached: $cachedValue")
+        } else {
+            println("Accessed from cache: $cachedValue")
+        }
+        return cachedValue ?: "Unknown"
+    }
+}
+
+class User(val firstName: String, val lastName: String) {
+    val displayName: String by CachedStringDelegate()
+}
+```
+这样user的displayName的值就被CachedStringDelegate这个类的getValue函数所代理了。
+而且displayName只计算一次，后面你再访问displayName直接返回第一次计算的结果
+#### 代理类
+还需要咔哧咔哧地写CachedStringDelegate这样的代理类？大人，时代变了，Kotlin提供了一些方便使用的代理类，使用它们你就再也不用写千篇一律代理类和它的get、set方法了
+下面是一些常用的代理类
+##### Lazy
+用Lazy类代理，再写一个lambda表达式，这个表达式的返回值就可以赋值给这个被代理的变量。
+用Lazy类代理的好处是，它只在第一次访问这个被代理变量时才赋值
+> 如果你不知道这个变量会不会被使用到，那么用lazy是一个不错的方式
+
+
+举例
+```
+class Database {
+    fun connect() {
+        println("Connecting to the database...")
+    }
+
+    fun query(sql: String): List<String> {
+        return listOf("Data1", "Data2", "Data3")
+    }
+}
+
+val databaseConnection: Database by lazy {
+    val db = Database()
+    db.connect()
+    db
+}
+
+fun fetchData() {
+    val data = databaseConnection.query("SELECT * FROM data")
+    println("Data: $data")
+}
+
+fun main() {
+    // First time accessing databaseConnection
+    fetchData()
+    // Connecting to the database...
+    // Data: [Data1, Data2, Data3]
+
+    // Subsequent access uses the existing connection
+    fetchData()
+    // Data: [Data1, Data2, Data3]
+}
+```
+#####  Observable
+这个代理类可以监听变量改变或者赋值
+例子如下
+```
+import kotlin.properties.Delegates.observable
+
+class Thermostat {
+    var temperature: Double by observable(20.0) { _, old, new ->
+        if (new > 25) {
+            println("Warning: Temperature is too high! ($old°C -> $new°C)")
+        } else {
+            println("Temperature updated: $old°C -> $new°C")
+        }
+    }
+}
+
+fun main() {
+    val thermostat = Thermostat()
+    thermostat.temperature = 22.5
+    // Temperature updated: 20.0°C -> 22.5°C
+
+    thermostat.temperature = 27.0
+    // Warning: Temperature is too high! (22.5°C -> 27.0°C)
+}
+```
+observable构造函数的参数就是这个被代理变量的初始值
+
+## 第三方类库
+### 导入
+导入的语法其实没什么不同。
+你可以只导入包里的一个类
+```
+import kotlin.time.Duration
+```
+也可以导入这个包里的所有类
+```
+import kotlin.time.*
+```
+遗憾的是，`*`是没法导入类里面的companion对象的，所以如果你想用这些对象，你得特别导入
+```
+import kotlin.time.Duration.Companion.hours
+```
+### Opt in
+有些第三方库的方法可能被标记为需要`opt-in`
+也就是说，你在调用它们之前，必须提前标注opt-in才能使用它们。
+一般第三方类库的作者觉得这样的方法还在开发中，未来可能会改变。
+一般来说，需要opt in标注的方法长这样
+```
+@ExperimentalUnsignedTypes
+inline fun uintArrayOf(vararg elements: UInt): UIntArray
+```
+如果你有一个方法调用了uintArrayOf，那么你需要在这个方法上面标准opt in
+```
+@OptIn(ExperimentalUnsignedTypes::class)
+fun main() {
+    // Create an unsigned integer array
+    val unsignedArray: UIntArray = uintArrayOf(1u, 2u, 3u, 4u, 5u)
+
+    // Modify an element
+    unsignedArray[2] = 42u
+    println("Updated array: ${unsignedArray.joinToString()}")
+    // Updated array: 1, 2, 42, 4, 5
+}
+```
+可能还有其他opt in的方式，这里就略了。
