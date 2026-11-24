@@ -135,9 +135,162 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 
 
-### 2.2.3 位置
+### 2.2.3 布局
 
-容器内Children的位置通过参数来决定，有些容器带有参数比如说`verticalArrangement`
+UI布局基于`containment`,译为包含关系，意味着component里面可以包含一个或者多个`component`被包含的在术语里被称为`Childred`起到包含作用的那个`component`就被称为`parent`在安卓开发中，有几类的作为`parent`的`component` 比较常见
+
+1. Box
+2. Column
+3. Row：里面的UI元素以行方式呈现上面的`component` 函数都接受`composable` 函数来作为它们的参数，这样子那些参数`composable`的布局就固定了
+
+要了解布局，首先了解什么是Alignment(对齐)和Arrangement（布局）
+
+一般来说。Alignment的决定一个组件在容器内的位置，Arrangement则是多个组件情况下应该排列组合。
+
+不过具体到容器里，Alignment管的是Children在主轴怎么排，而Arrangement管的是Children在交叉轴怎么排
+
+而主轴和交叉轴要在具体的容器里，你才知道是哪个
+
+#### Column
+
+##### arrangement
+
+对于Column来说，它的Children是竖直排的，所以竖直方向就是Column的主轴
+
+代码示例
+
+```
+ Column(
+        verticalArrangement = Arrangement.Top, // take a look at this!
+        modifier = modifier
+    ) {
+        Text(
+            text = message,
+            fontSize = 100.sp,
+            lineHeight = 116.sp,
+        )
+        Text(
+            text = from,
+            fontSize = 36.sp,
+            modifier = Modifier
+
+        )
+    }
+```
+
+这样子，Column那两个Text元素就会移动到Column容器的最顶端
+
+它可以选择
+
+1. verticalArrangement = Arrangement.Center  放在中间
+
+2. verticalArrangement = Arrangement.Bottom 放在最低端
+
+##### alignment
+
+一旦column决定了Children在垂直轴的位置，接下来的水平轴位置就要靠alignment来决定了。
+
+比如都是最低端，有的可以靠左放，有的可以放中间，有的可以放右边。
+
+代码示例
+
+```
+Column(
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.Start, // look at here
+        modifier = modifier
+    ) {
+        Text(
+            text = message,
+            fontSize = 36.sp,
+            lineHeight = 116.sp,
+            modifier = Modifier
+        )
+        Text(
+            text = from,
+            fontSize = 36.sp,
+            modifier = Modifier
+
+        )
+    }
+```
+
+这样Children的位置就是底部靠左放，你还可以选择
+
+1. Alignment.CenterHorizontally 底部中间
+
+2. horizontalAlignment = Alignment.End 底部靠右边
+   
+   
+
+#### Row
+
+既然你已经知道了Column，那么Row就很简单了。
+
+Arrangement管主轴，也就是横向怎么排
+
+Alignment管交叉轴，也就是竖直怎么排
+
+代码示例
+
+```
+ Row(
+        horizontalArrangement = Arrangement.Start,    //水平方向的靠左边
+        verticalAlignment = Alignment.CenterVertically, //竖直方向的中间位置 
+        modifier = modifier
+    ) {
+        Text(
+            text = message,
+            fontSize = 10.sp,
+            modifier = Modifier
+        )
+        Text(
+            text = from,
+            fontSize = 10.sp,
+            modifier = Modifier
+
+        )
+    }
+```
+
+#### box
+
+box没有什么主轴交叉轴，决定box内children的布局就是它的一个参数contentAlignment
+
+示例
+
+```
+    Box(
+        contentAlignment = Alignment.BottomEnd, //children放置在最底下，然后靠右边
+        modifier = modifier
+    ) {
+        Text(
+            text = message,
+            fontSize = 10.sp,
+            modifier = Modifier
+        )
+        Text(
+            text = from,
+            fontSize = 10.sp,
+            modifier = Modifier
+
+        )
+    }
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+容器内Children的布局通过参数来决定，有些容器带有参数比如说`verticalArrangement`
 可以给它赋值，这样就可以决定Children在UI的位置，前提是容器比Children要大
 示例
 
@@ -149,6 +302,13 @@ Column (modifier = modifier.padding(8.dp),verticalArrangement  =  Arrangement.Ce
 ```
 
 如上，Arrangement.Center参数决定了Column容器的所有Text会居中
+
+
+
+### 对齐
+
+对齐Align也算是跟位置有关，它调整的是Children在垂直方向的
+
 Text示例
 
 ```
@@ -173,32 +333,115 @@ Column (verticalArrangement  =  Arrangement.Center,) {
 1. `dp`, 也就是[_density-independent pixels_ (DP)](https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/package-summary#\(kotlin.Int\).dp\(\)),
 
 2. `sp`, 也就是 [_scalable pixels_ (SP)](https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/package-summary#\(kotlin.Float\).sp\(\)) ，这个单位的大小会随着手机设置的字体大小变化而变化
-   
-   ### 2.3.1 `sp`
-   
-   代码示例
-   
-   ```
-   @Composable
-   fun GreetingText(message: String, modifier: Modifier = Modifier) {
-    Text(
-        text = message,
-        fontSize = 100.sp,
-        lineHeight = 116.sp,
-    )
-   ```
 
-## 2.4 UI布局
+### sp
 
-UI布局基于`containment`,译为包含关系，意味着component里面可以包含一个或者多个`component`
-被包含的在术语里被称为`Childred`
-起到包含作用的那个`component`就被称为`parent`
-在安卓开发中，有几类的作为`parent`的`component` 比较常见
+代码示例
+    @Composable
+    fun GreetingText(message: String, modifier: Modifier = Modifier) {
+     Text(
+         text = message,
+         fontSize = 100.sp,
+         lineHeight = 116.sp,
+     )
 
-1. Box
-2. Column
-3. Row：里面的UI元素以行方式呈现
-   上面的`component` 函数都接受`composable` 函数来作为它们的参数，这样子那些参数`composable`的布局就固定了
+### weight
+
+modifier有一个函数名叫Weight，它是一个拓展函数，一般只在Coumn和Row的作用域才起到作用
+
+> 关于这个语法，请参考带接收者的lambda表达式
+
+它执行后生成一个新配置好的modifier，可以把这个新的modifier传给该容器子元素composable
+
+它在不同作用域起到的作用也不同，下面是两种它可以生效的作用域
+
+#### column
+
+当你放置column后，你就可以在column的content（本质是一段lambda代码）内用modifier指定每个children分配的高度
+
+伪代码代码示例
+
+```
+ Column(modifier = modifier) {
+        Row(modifier = modifier.weight(1.0f,true)){
+            Composable(
+               ...
+            )
+            Composable(
+                ...
+            )
+        }
+        Row(modifier = modifier.weight(1.0f,true)) {
+            Composable(
+                ...
+            )
+            Composable(
+               ...
+            )
+        }
+    }
+```
+
+虽然看起来有点抽象，明明modifier.weight是作为传给Row，为什么反而调整的是高度分配，因为它是放在Column作用域内。
+
+因为Column里面只有两个Row子容器，设置weight全都是1意味着Column里面的高度被两个Row平均分配
+
+其中第二个参数是，子容器是否应该吃掉parent给它分配的所有空间，
+
+1. true的话就是我踏马吃吃吃
+
+2. false就是虽然你分配给我那么多空间，但是我只占用内容需要的空间
+
+#### Row
+
+类似于Column，Row作用域内调节的就是子容器们分配的宽度了。
+
+代码示例
+
+```
+Row(modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center){
+            Composable(
+                name = stringResource(R.string.text),
+                description = stringResource(R.string.text_description),
+                modifier = modifier.weight(1.0f, true),
+                color = 0xFFEADDFF
+            )
+            Composable(
+                name = stringResource(R.string.image),
+                description = stringResource(R.string.text_description),
+                modifier = modifier.weight(1.0f, true),
+                color = 0xFFD0BCFF
+            )
+        }
+```
+
+这个Row里面有两个composable子容器，对应的weight都是1，也就是说parent给子容器分配的宽度都是均等的。
+
+#### fillMaxHeight
+
+在告诉你这个玩意是啥之前，先说说之前经历写Quadrant的一个BUG.
+
+这个程序最终展示的是一个四宫格，每一个四宫格上面居中排列文字。
+
+我的分析是这样的
+
+1. 从上到下看，可以把整个页面看作是一个Column，里面是两个Children，从上到下排列
+
+2. 给两个Children分配weight为1，就是说，Column把它的所有空间，上下平均分配给的Children，形象点比较就是汉字`日`
+
+3. 具体到每个Children，其实它们的类型是Row，形象点比较就是𫩏
+
+4. 这些Children里面又存了Children（Column包含的文本），分别再设置它的weight为1，就是说Row给里面的Children分配了均等的宽度
+
+好像这样就行了，但实际运行后发现最后的Column包含的文本并没占满整个父容器分配给它的高度，宽度倒是满足了
+
+其实原因是row给children分配的是宽度，没指定分配高度，在row执行域里面，可以用modifier调用fillMaxHeight/fillMaxWidth来让那部分没指定的，全部占用掉
+
+
+
+
 
 ## 2.5 资源
 
@@ -319,7 +562,3 @@ GreetingImage(message =  stringResource(R.string.happy_birthday_text), from = st
     <string name="signature_text">From Emma</string>
 </resources>
 ```
-
-
-
-
