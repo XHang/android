@@ -11,7 +11,7 @@
    
    安卓的项目名允许空格，比如说`Greeting Card`
 
-## 1.3 资源管理器
+## 1.2 资源管理器
 
 以防你不知道，这个IDE附带了一个资源管理器，你可以在这里到导入资源，比如说图片资源
 仙人指路`View > Tool Windows > Resource Manager`
@@ -76,7 +76,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 里面的Surface包含了Text，这样就可以修改Text的背景颜色为红色，当然你也可以不需要任何容器，直接去掉Surface即可
 
-### Box
+### 2.2.2 Box
 
 Box容器内可以允许其他UI元素相互重叠，还可以调整里面的对齐方式
 
@@ -94,11 +94,21 @@ Box(modifier = modifier) {
 
 这么写的话，Box首先把图片放上去，然后是文字，因为文字是最后一行，所以最后的展示效果就是文字在图片上方。
 
+### Spacer
+这个容器可以交叉放在Column或者Row的作用域间隔，用来创建一个空白空间（其实用padding也可以做到）
+```
+Column(modifier = Modifier.padding(33.dp)) {  
+    Contact(modifier = modifier,stringResource(R.string.phone))  
+    Spacer(modifier = Modifier.height(6.dp))  
+    Contact(modifier = modifier,stringResource(R.string.social_media))  
+    Spacer(modifier = Modifier.height(6.dp))  
+    Contact(modifier = modifier,stringResource(R.string.email))  
+}
+```
 
+### 2.2.3 装饰
 
-### 2.2.2 装饰
-
-#### 2.2.2.1 padding
+#### 2.2.3.1 padding
 
 这个装饰可以修改内边距，也就是容器内容和容器边框之间的距离。
 看上去就好像内容和边框中间填充了一层，所以叫padding
@@ -135,7 +145,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 
 
-### 2.2.3 布局
+### 2.2.4 布局
 
 UI布局基于`containment`,译为包含关系，意味着component里面可以包含一个或者多个`component`被包含的在术语里被称为`Childred`起到包含作用的那个`component`就被称为`parent`在安卓开发中，有几类的作为`parent`的`component` 比较常见
 
@@ -151,9 +161,9 @@ UI布局基于`containment`,译为包含关系，意味着component里面可以�
 
 而主轴和交叉轴要在具体的容器里，你才知道是哪个
 
-#### Column
+#### 2.2.4.1 Column
 
-##### arrangement
+##### 2.2.4.1.1 arrangement
 
 对于Column来说，它的Children是竖直排的，所以竖直方向就是Column的主轴
 
@@ -186,7 +196,7 @@ UI布局基于`containment`,译为包含关系，意味着component里面可以�
 
 2. verticalArrangement = Arrangement.Bottom 放在最低端
 
-##### alignment
+##### 2.2.4.1.2 alignment
 
 一旦column决定了Children在垂直轴的位置，接下来的水平轴位置就要靠alignment来决定了。
 
@@ -223,7 +233,7 @@ Column(
    
    
 
-#### Row
+#### 2.2.4.2 Row
 
 既然你已经知道了Column，那么Row就很简单了。
 
@@ -253,7 +263,7 @@ Alignment管交叉轴，也就是竖直怎么排
     }
 ```
 
-#### box
+#### 2.2.4.3 box
 
 box没有什么主轴交叉轴，决定box内children的布局就是它的一个参数contentAlignment
 
@@ -305,7 +315,7 @@ Column (modifier = modifier.padding(8.dp),verticalArrangement  =  Arrangement.Ce
 
 
 
-### 对齐
+### 2.2.5 对齐
 
 对齐Align也算是跟位置有关，它调整的是Children在垂直方向的
 
@@ -334,7 +344,7 @@ Column (verticalArrangement  =  Arrangement.Center,) {
 
 2. `sp`, 也就是 [_scalable pixels_ (SP)](https://developer.android.com/reference/kotlin/androidx/compose/ui/unit/package-summary#\(kotlin.Float\).sp\(\)) ，这个单位的大小会随着手机设置的字体大小变化而变化
 
-### sp
+### 2.3.1 sp
 
 代码示例
     @Composable
@@ -345,7 +355,7 @@ Column (verticalArrangement  =  Arrangement.Center,) {
          lineHeight = 116.sp,
      )
 
-### weight
+### 2.3.2 weight
 
 modifier有一个函数名叫Weight，它是一个拓展函数，一般只在Coumn和Row的作用域才起到作用
 
@@ -355,7 +365,7 @@ modifier有一个函数名叫Weight，它是一个拓展函数，一般只在Cou
 
 它在不同作用域起到的作用也不同，下面是两种它可以生效的作用域
 
-#### column
+#### 2.3.2.1 column
 
 当你放置column后，你就可以在column的content（本质是一段lambda代码）内用modifier指定每个children分配的高度
 
@@ -392,7 +402,7 @@ modifier有一个函数名叫Weight，它是一个拓展函数，一般只在Cou
 
 2. false就是虽然你分配给我那么多空间，但是我只占用内容需要的空间
 
-#### Row
+#### 2.3.2.2 Row
 
 类似于Column，Row作用域内调节的就是子容器们分配的宽度了。
 
@@ -419,7 +429,7 @@ Row(modifier = modifier,
 
 这个Row里面有两个composable子容器，对应的weight都是1，也就是说parent给子容器分配的宽度都是均等的。
 
-#### fillMaxHeight
+#### 2.3.2.3 fillMaxHeight
 
 在告诉你这个玩意是啥之前，先说说之前经历写Quadrant的一个BUG.
 
@@ -443,15 +453,15 @@ Row(modifier = modifier,
 
 
 
-## 2.5 资源
+## 2.4 资源
 
-### 2.5.1 导入
+### 2.4.1 导入
 
 在安卓系统里，你可以在资源管理者里面导入图片资源，也可以导入Drawables
 注意：由于安卓设备众多，同样的一块面积，有些设备含更多的像素，有些含更小的像素，为了避免图片显示异常，你必须在导入资产之前考虑`Density`
 resize：不要轻易rezie图片，如果resize之后图片超出了安卓系统能处理的范围，系统立马就抛出一个内存溢出然后死给你看，所以，如果图片资产是用来作为背景或者照片显示使用，你应该用`drawable`来导入它们
 
-### 引用
+### 2.4.2 引用
 
 Android编译器会为你的资源自动生成一个R类文件，通过这个R类文件你就可以引用带具体的资源文件
 
@@ -469,9 +479,9 @@ val image = painterResource(R.drawable.androidparty)
 
 2. androidparty就是对于的图片文件名 
 
-### 图片
+### 2.4.3 图片
 
-#### 应用
+#### 2.4.3.1 应用
 
 想在UI里面创建一个图片元素，需要用的函数是Image()
 
@@ -483,7 +493,7 @@ val image = painterResource(R.drawable.androidparty)
 
 这里设置为Null，到时屏幕朗读到这里时，会跳过。
 
-#### 缩放
+#### 2.4.3.2 缩放
 
 首先来了解几个技术术语
 
@@ -505,8 +515,20 @@ val image = painterResource(R.drawable.androidparty)
 
         )
 ```
-
-#### 透明度
+但这个缩放设置不改变原有布局，只改变视觉大小。
+所以如果设置的值超过了容器的大小，就会覆盖其他元素。
+如果这不是你需要的，那么你得换另一个Size来调整图片的大小
+#### 2.4.3.3 Size()
+Similar to 缩放，它也可以用来调整图片的大小，但是布局也会随着改变。
+这样改就不会占用到其他Composable的空间了
+```
+Icon(  
+    painterResource(R.drawable.baseline_accessible_forward_24),  
+    contentDescription = null,  
+    modifier = Modifier.size(230.dp,230.dp)  
+)
+```
+#### 2.4.3.4 透明度
 
 在代码里，可以用alpha参数来指定图片的透明度
 
@@ -525,7 +547,7 @@ val image = painterResource(R.drawable.androidparty)
         )
 ```
 
-### 字符串
+### 2.4.4 字符串
 
 在代码里面写死字符串是坏习惯，所以建议把代码里的文字全部提取到一个文件里，放在`res/values/strings.xml`
 
